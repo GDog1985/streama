@@ -5,21 +5,28 @@ import static java.util.UUID.randomUUID
 class User {
 
 	transient springSecurityService
+	transient settingsService
 
 	Date dateCreated
 	Date lastUpdated
+  boolean deleted = false
 
 	String username
 	String password
+
 	boolean enabled = false
 	boolean accountExpired
 	boolean accountLocked
 	boolean passwordExpired
 	boolean invitationSent = false
-
+	boolean pauseVideoOnClick = true
 	String uuid
+	String language = 'en'
+  String fullName
 
 	static transients = ['springSecurityService']
+
+  static hasMany = [favoriteGenres: Genre]
 
 	static constraints = {
 		username blank: false, unique: true
@@ -30,6 +37,7 @@ class User {
 
 	static mapping = {
 		password column: '`password`'
+		cache true
 	}
 
 	Set<Role> getAuthorities() {
@@ -38,15 +46,21 @@ class User {
 
 	def beforeInsert() {
 		if(!password){
-			password = randomUUID() as String
+			password  = randomUUID() as String
 		}
-		
+
 		encodePassword()
 	}
 
 	def beforeUpdate() {
 		if (isDirty('password')) {
 			encodePassword()
+		}
+	}
+
+	def getInvitationLink(){
+		if(invitationSent && uuid){
+			return settingsService.baseUrl +  "/invite?uuid=${uuid}"
 		}
 	}
 

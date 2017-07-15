@@ -8,12 +8,14 @@ import grails.transaction.Transactional
 @Transactional(readOnly = true)
 class EpisodeController {
 
+    def videoService
+
     static responseFormats = ['json', 'xml']
     static allowedMethods = [save: "POST", update: "PUT", delete: "DELETE"]
 
     def index() {
         TvShow show = TvShow.get(params.getLong("showId"))
-        respond Episode.findAllByShow(show), [status: OK]
+        respond Episode.findAllByShowAndDeletedNotEqual(show, true), [status: OK]
     }
 
     @Transactional
@@ -59,7 +61,7 @@ class EpisodeController {
             return
         }
 
-        episodeInstance.delete flush:true
+        videoService.deleteVideoAndAssociations(episodeInstance)
         render status: NO_CONTENT
     }
 }

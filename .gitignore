@@ -34,4 +34,13 @@
 # "temporary" build files
 /target
 
+.slcache
+/bower-components
+/node_modules
 
+# IDEA
+.idea
+*.iml
+/classes
+/build
+*.log

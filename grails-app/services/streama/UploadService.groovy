@@ -2,47 +2,69 @@ package streama
 
 import grails.transaction.Transactional
 import org.apache.commons.codec.digest.DigestUtils
-import org.springframework.web.multipart.commons.CommonsMultipartFile
 import org.springframework.web.multipart.support.DefaultMultipartHttpServletRequest
 
 @Transactional
 class UploadService {
 
-  def grailsApplication
-  def grailsLinkGenerator
+  def settingsService
 
+  def getStoragePaths(){
+    def storages = []
+    def storage1 = Settings.findBySettingsKey('Upload Directory')?.value
+    if(storage1){
+      storages.add(storage1)
+    }
 
-  def upload(DefaultMultipartHttpServletRequest request) {
+    def secondDirectory = Settings.findBySettingsKey('Second Directory')?.value
+    def additionalReadStorages = secondDirectory?.split(/\|/)
 
-    CommonsMultipartFile rawFile = request.getFile('file')
+    if(additionalReadStorages){
+      storages.addAll(additionalReadStorages)
+    }
+    return storages
+  }
+
+  def getLocalPath(){
+    return Settings.findBySettingsKey('Local Video Files')?.value
+  }
+
+  def upload(request, params = [:]) {
+    log.debug(params)
+    def rawFile = request.getFile('file')
     def sha256Hex = DigestUtils.sha256Hex(rawFile.inputStream)
     def index = rawFile.originalFilename.lastIndexOf('.')
-    def extension = rawFile.originalFilename[index..-1];
-    if(!extension){
-      extension = ".png"
-    }
-    java.io.File targetFile = new java.io.File(this.dir.uploadDir,sha256Hex+extension)
+    String extension = rawFile.originalFilename[index..-1];
+    def originalFilenameNoExt = rawFile.originalFilename[0..(index-1)]
+    def contentType = rawFile.contentType;
+
+    java.io.File targetFile = new java.io.File(this.dir.uploadDir, sha256Hex+extension)
     rawFile.transferTo(targetFile)
-    
-    File file = createFileFromUpload(sha256Hex, rawFile, extension)
+
+    File file = createFileFromUpload(sha256Hex, rawFile, extension, originalFilenameNoExt + extension, contentType, params)
+
     return file
   }
 
 
-  def createFileFromUpload(sha256Hex, image, extension){
-    def imageInstance = new File(sha256Hex:sha256Hex);
-    imageInstance.originalFilename = image.originalFilename
-    imageInstance.contentType = image.contentType
-    imageInstance.extension = extension
-    imageInstance.size = image.size
-    imageInstance.name = image.name
-    imageInstance.save(failOnError: true)
+  def createFileFromUpload(sha256Hex, rawFile, extension, originalFilename, contentType, params = [:]){
+    def fileInstance = new File(sha256Hex:sha256Hex)
+    fileInstance.originalFilename = originalFilename
+    fileInstance.contentType = contentType
+    fileInstance.extension = extension
+    fileInstance.size = rawFile.size
+    fileInstance.name = rawFile.name
+    if(params?.isPublic == 'true'){
+      fileInstance.isPublic = true
+    }
+    fileInstance.save(failOnError: true)
 
-    return imageInstance
+
+    return fileInstance
   }
 
   def getDir() {
-    def imagePath =  grailsApplication.config.streama["storage"].path
+    def imagePath = storagePaths.getAt(0)
     def uploadDir = new java.io.File(imagePath + '/upload')
     if (!uploadDir.exists()){
       uploadDir.mkdirs()
@@ -52,23 +74,32 @@ class UploadService {
 
   }
 
-    String getPathWithoutExtension(String sha256Hex){
-      def uploadDir = new java.io.File(grailsApplication.config.streama["storage"].path + '/upload')
-      return "$uploadDir/$sha256Hex"
+  String getPath(File file){
+    if (file.localFile) {
+      // A local file is defined
+      return new java.io.File(file.localFile)
     }
 
-  String getPath(String sha256Hex, extension){
-    if(!extension){
-      extension = ".png"
+    // The file is stored in the upload directory
+    def foundVideoPath
+
+    storagePaths.each{storagePath ->
+      if(foundVideoPath){
+        return
+      }
+      def uploadDir = new java.io.File(storagePath + '/upload')
+      def filePath = "$uploadDir/$file.sha256Hex" + file.extension
+      if((new java.io.File(filePath)).exists()){
+        foundVideoPath = filePath
+      }
+
     }
-    return getPathWithoutExtension(sha256Hex) + extension
+    return foundVideoPath
   }
 
   def getFileSrc(File file){
-    def serverURL = grailsApplication.metadata['grails.serverURL']
-    return grailsLinkGenerator.serverBaseURL  + "/file/serve/" + file.sha256Hex + file.extension
-
+    def baseUrl = settingsService.baseUrl
+    baseUrl = baseUrl.replaceAll('/$', '')
+    return baseUrl  + "/file/serve/" + file.id + file.extension
   }
-    
-    
 }

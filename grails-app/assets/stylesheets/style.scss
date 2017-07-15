@@ -1,9 +1,11 @@
-@import url(https://fonts.googleapis.com/css?family=Pacifico);
+@import "icomoon/style.css";
 
 @import "mixins";
 @import "variables";
 @import "util";
 @import "btn";
+@import "alertify";
+@import "misc";
 
 @import "main";
 @import "media-display";
@@ -15,3 +17,8 @@
 @import "player-controls";
 @import "invite";
 @import "modal";
+@import "settings";
+@import "profile";
+@import "genre";
+
+@import "media";

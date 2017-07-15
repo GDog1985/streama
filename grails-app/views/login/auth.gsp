@@ -1,50 +1,73 @@
-<html>
+<!doctype html>
+<html lang="en" class="no-js">
 <head>
-	<meta name='layout' content='main'/>
-	<title><g:message code="springSecurity.login.title"/></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<title>${streama.Settings.findByName('title').value}</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+	<style type="text/css">
+	[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+		display: none !important;
+	}
+	</style>
+
+	<asset:stylesheet src="vendor.css"/>
+	<asset:stylesheet src="application.css"/>
+
+	<asset:link rel="icon" href="favicon.ico" type="image/x-ico" />
+
+	<script type="text/javascript">
+		window.contextPath = "${request.contextPath}";
+	</script>
 </head>
 
-<body>
-<div id='login'>
-	<div class='inner'>
-		<div class='fheader'><g:message code="springSecurity.login.header"/></div>
+<body >
+	<g:render template="/templates/header_simple"></g:render>
+	<div id='login' ng-app="streama.translations" class="ng-cloak">
+		<div class='inner'>
+			<div class='fheader'>{{'LOGIN.TITLE' | translate}}</div>
 
-		<g:if test='${flash.message}'>
-			<div class='login_message'>${flash.message}</div>
-		</g:if>
+			<g:if test='${flash.message}'>
+				<div class='login_message'>${flash as grails.converters.JSON}</div>
+			</g:if>
 
-		<form action='${postUrl}' method='POST' id='loginForm' class='cssform form-horizontal' autocomplete='off'>
+			<form action='${postUrl}' method='POST' id='loginForm' class='cssform form-horizontal' autocomplete='off'>
 
-			<div class="form-group">
-				<label for="inputEmail" class="col-lg-2 control-label">Email</label>
-				<div class="col-lg-10">
-					<input type="text" name="j_username" class="form-control" placeholder="Email">
-				</div>
-			</div>
-
-			<div class="form-group">
-				<label for="inputPassword" class="col-lg-2 control-label">Password</label>
-				<div class="col-lg-10">
-					<input type="password" name='j_password' class="form-control" placeholder="Password">
-					<div class="checkbox">
-						<label>
-							<input type='checkbox' class='chk' name='${rememberMeParameter}' id='remember_me' <g:if test='${hasCookie}'>checked='checked'</g:if>/> Remember me
-						</label>
+				<div class="form-group">
+					<label for="inputEmail" class="col-lg-2 control-label">{{'LOGIN.USERNAME' | translate}}</label>
+					<div class="col-lg-10">
+						<input type="text" name="username" class="form-control" placeholder="{{'LOGIN.USERNAME' | translate}}">
 					</div>
 				</div>
-			</div>
-			
-			
-			<button class="btn btn-primary pull-right">Submit</button>
-		</form>
+
+				<div class="form-group">
+					<label for="inputPassword" class="col-lg-2 control-label">{{'LOGIN.PASSWORD' | translate}}</label>
+					<div class="col-lg-10">
+						<input type="password" name='password' class="form-control" placeholder="{{'LOGIN.PASSWORD' | translate}}">
+					</div>
+				</div>
+				<span>
+					<g:if test="${streama.Settings.findBySettingsKey('First Time Login Info')?.value == 'true'}">
+						{{'LOGIN.FIRST_TIME_HINT' | translate}}
+					</g:if>
+				<input style="display: none;" type='checkbox' name='remember_me' id='remember_me' checked='checked'/>
+
+				<button class="btn btn-primary pull-right">{{'LOGIN.SUBMIT' | translate}}</button></span>
+			</form>
+		</div>
 	</div>
-</div>
-<script type='text/javascript'>
-	<!--
-	(function() {
-		document.forms['loginForm'].elements['j_username'].focus();
-	})();
-	// -->
-</script>
+	<script type='text/javascript'>
+		<!--
+		(function() {
+			document.forms['loginForm'].elements['username'].focus();
+		})();
+		// -->
+	</script>
+
+
+	<asset:javascript src="vendor.js" />
+	<asset:javascript src="/streama/streama.translations.js" />
+
 </body>
 </html>
